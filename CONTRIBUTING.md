@@ -19,6 +19,11 @@ ref [Adding a library to the sbt project][al]
 
 [al]: https://www.jetbrains.com/help/idea/sbt-support.html#add_library_scala_file
 
+### Keyboard locks up
+
+widely reported. known issue. work-around: restart ibus
+https://youtrack.jetbrains.com/issue/IDEA-78860
+
 ### Road not taken: gradle
 
 I tried the [scala plugin for gradle][sg] but ran into

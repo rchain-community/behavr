@@ -21,11 +21,6 @@ case class Par(ps: List[Process]) extends Process
 
 case class Action(nsubj: Name, nobj: Name)
 
-sealed trait Name
-case class Quote(p: Process) extends Name
-case class S(s: String) extends Name
-
-
 object Process {
   def zero: Process = Zero
 
@@ -41,4 +36,18 @@ object Process {
       case (proc, Par(proclist)) => Par(proc :: proclist)
       case (p1, p2) => Par(List(p1, p2))
     }
+
+  // aka structurallyEquivalent
+  def equivalent(proc1: Process, proc2: Process): Boolean = ( proc1, proc2 ) match {
+    // the empty par is 0
+    case ( Zero, Par( Nil ) ) => true
+    case ( Par( Nil ), Zero ) => true
+
+    // 0 is structurally equivalent to 0|0|...|0 *)
+    case ( Zero, Par( proclisthd :: proclisttl ) ) =>
+      equivalent(proc1, proclisthd) && equivalent(proc1, Par( proclisttl ))
+    // ... TODO: more cases
+    // structural equivalence includes syntactic equality
+    case _ => proc1 == proc2
+  }
 }
