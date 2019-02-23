@@ -5,6 +5,20 @@ We follow sbt conventions.
 
 [1]: https://www.jetbrains.com/idea/download/?fromIDE=#section=linux
 
+### Testing
+
+ref [Testing Scala in IntelliJ with ScalaTest ](https://docs.scala-lang.org/getting-started-intellij-track/testing-scala-in-intellij-with-scalatest.html)
+
+### Adding a library
+
+_probably old hat to most IDE users, but..._
+
+Alt-Enter, "Add sbt dependency"
+
+ref [Adding a library to the sbt project][al]
+
+[al]: https://www.jetbrains.com/help/idea/sbt-support.html#add_library_scala_file
+
 ### Road not taken: gradle
 
 I tried the [scala plugin for gradle][sg] but ran into
