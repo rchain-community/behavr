@@ -1,5 +1,16 @@
 package rho
 
+/**
+  * RhoCalculus Process
+  *
+  * ref:
+  * A Reflective Higher-order Calculus,
+  * L.G. Meredith, Matthias Radestock 2005
+  * https://doi.org/10.1016/j.entcs.2005.05.016.
+  *
+  * transcribed from https://github.com/leithaus/rhocaml/blob/master/rho.ml
+  * da884fb  on Jun 19, 2016 Meredith Gregory
+  */
 sealed trait Process
 
 case object Zero extends Process
