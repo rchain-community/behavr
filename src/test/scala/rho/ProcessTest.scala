@@ -5,7 +5,7 @@ import org.scalatest.FunSuite
 class ProcessTest extends FunSuite {
   import Process._
 
-  val n1 = S("n1")
+  val n1 = Quote(Par(List(Zero, Zero)))
   val p0: Process = zero
   val p1 = Lift(n1, Zero)
 

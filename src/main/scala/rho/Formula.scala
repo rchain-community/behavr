@@ -34,3 +34,41 @@ case class Quotation(f: Formula) extends Indicator
 case class Naming(n: Name) extends Indicator
 
 case class Condition(i: Indicator, n: Name)
+
+object Formula {
+  def logicalSubstitution(form: Formula, nsource: Name, ntarget: Name): Formula =
+    form match {
+      case True => True
+      case ZeroF => ZeroF
+      case Negation(nForm) => Negation(logicalSubstitution(nForm, nsource, ntarget))
+      case Conjunction(Nil) => Negation(True)
+      case Conjunction(hForm :: rForm) =>
+        Conjunction((hForm :: rForm).map(phi => logicalSubstitution(phi, nsource, ntarget)))
+      case Mixture(Nil) => ZeroF
+      case Mixture(hForm :: rForm) =>
+        Mixture((hForm :: rForm).map(phi => logicalSubstitution(phi, nsource, ntarget)))
+      case Descent(n) =>
+        Descent(if (Name.equivalent(n, nsource)) ntarget else nsource)
+      case Elevation(i, eForm) =>
+        Elevation(i match {
+          case Quotation(_) => i
+          case Naming(n) => Naming(if (Name.equivalent(n, nsource)) ntarget else n)
+        },
+          logicalSubstitution(eForm, nsource, ntarget)
+        )
+      case Activity(Condition(i, n), aForm) => // bug: need a more robust substitution collision algorithm *)
+        val nntarget = Quote(Par(List(Lift(n, Zero),
+          Lift(nsource, Zero))))
+        Activity(Condition(
+          i match {
+            case Quotation(_) => i
+            case Naming(n) => Naming(if (Name.equivalent(n, nsource)) ntarget else n)
+          },
+          nntarget),
+          logicalSubstitution(
+            logicalSubstitution(aForm, n, nntarget),
+              nsource,
+            ntarget)
+        )
+    }
+}

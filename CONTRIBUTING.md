@@ -27,7 +27,7 @@ https://youtrack.jetbrains.com/issue/IDEA-78860
 ### Road not taken: gradle
 
 I tried the [scala plugin for gradle][sg] but ran into
-enough rough edges to conlude that it's not a well-trodden path
+enough rough edges to conclude that it's not a well-trodden path
 and go back to sbt.
 
 [sg]: https://docs.gradle.org/current/userguide/scala_plugin.html
