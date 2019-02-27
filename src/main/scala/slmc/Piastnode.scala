@@ -25,17 +25,17 @@ sealed trait Piastnode
 
 case object Void extends Piastnode
 
-case class Par(var arg1: Piastnode, var arg2: Piastnode) extends Piastnode
+case class Par(ast1: Piastnode, ast2: Piastnode) extends Piastnode
 
-case class Sum(var arg1: Piastnode, var arg2: Piastnode) extends Piastnode
+case class Sum(ast1: Piastnode, ast2: Piastnode) extends Piastnode
 
-case class New(arg1: List[String], var p: Piastnode) extends Piastnode
+case class New(l: List[String], ast: Piastnode) extends Piastnode
 
-case class Act(arg1: action, var p: Piastnode) extends Piastnode
+case class Act(a: action, astc: Piastnode) extends Piastnode
 
-case class Test(arg1: String, b: String, var p: Piastnode, t: test) extends Piastnode
+case class Test(id1: String, id2: String, ast: Piastnode, t: test) extends Piastnode
 
-case class Var(arg1: String, ss: List[String]) extends Piastnode
+case class Var(x: String, aL: List[String]) extends Piastnode
 
 //** Declaration environment type ***)
 sealed trait dec
