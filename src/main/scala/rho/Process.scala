@@ -1,5 +1,7 @@
 package rho
 
+import scala.annotation.tailrec
+
 /**
   * RhoCalculus Process
   *
@@ -153,4 +155,60 @@ object Process {
       case Par(proclist) =>
         Par(proclist.map(proc => syntacticSubstitution(proc, nsource, ntarget)))
     }
+
+  def gt(p1: Process, p2: Process): Boolean = (p1, p2) match {
+    case (Zero, _) => false
+    case (Input(_, _), Zero) => true
+    case (
+      Input(Action(Quote(s1), Quote(o1)), c1),
+      Input(Action(Quote(s2), Quote(o2)), c2)) => gt(s1, s2) || gt (o1, o2) || gt(c1, c2)
+    case (Input(_, _), Lift(_, _)) => false
+    case (Input(_, _), Drop(_)) => false
+    case (Input(_, _), Par(_)) => false
+    case (Lift(_, _), Zero) => true
+    case (Lift(_, _), Input(_, _)) => true
+    case (Lift(_, _), Drop(_)) => false
+    case (
+      Lift(Quote(s1), c1),
+      Lift(Quote(s2), c2)) => gt(s1, s2) || gt(c1, c2)
+    case (Lift(_, _), Par(_)) => false
+    case (Drop(_), _) => false // not normalized
+    case (Par(_), Zero) => true
+    case (Par(_), Input(_, _)) => true
+    case (Par(_), Lift(_, _)) => true
+    case (Par(_), Drop(_)) => true
+    case (Par(Nil), Par(Nil)) => false
+    case (Par(Nil), Par(_)) => false
+    case (Par(_), Par(Nil)) => true
+    case (Par(pp1 :: ps1), Par(pp2 :: ps2)) => gt(pp1, pp2) && gt(Par(ps1), Par(ps2))
+    case oops =>
+      println("@@@oops!" + oops.toString())
+      false
+   }
+
+  val nilProcs: List[Process] = Nil
+
+  def normalize(p: Process): Process = p match {
+    case Zero => Zero
+    case Input(Action(Quote(subj), Quote(obj)), cont) =>
+      val subjn = normalize(subj)
+      val objn = normalize(obj)
+      val contn = normalize(cont)
+      Input(Action(Quote(subjn), Quote(objn)), contn)
+    case Lift(Quote(subj), cont) =>
+      val subjn = normalize(subj)
+      val contn = normalize(cont)
+      Lift(Quote(subjn), contn)
+    case Drop(Quote(pp)) => normalize(pp)
+    case Par(ps) =>
+      val parts = ps.map(normalize).sortWith(gt).distinct
+      parts match {
+        case Nil => Zero
+        case List(pp) => pp
+        case _ => Par(parts)
+      }
+    case _ =>
+      println("@@@@oops!" + p.toString)
+      p
+  }
 }
