@@ -62,7 +62,7 @@ object Formula {
         Activity(Condition(
           i match {
             case Quotation(_) => i
-            case Naming(n) => Naming(if (Name.equivalent(n, nsource)) ntarget else n)
+            case Naming(nn) => Naming(if (Name.equivalent(nn, nsource)) ntarget else nn)
           },
           nntarget),
           logicalSubstitution(

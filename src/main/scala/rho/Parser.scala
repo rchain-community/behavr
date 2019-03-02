@@ -1,6 +1,5 @@
 package rho
 
-import scala.util.parsing.combinator.PackratParsers
 import scala.util.parsing.combinator.RegexParsers
 
 class Parser extends RegexParsers {
