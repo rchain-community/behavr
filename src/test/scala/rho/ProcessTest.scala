@@ -1,6 +1,5 @@
 package rho
 
-import org.scalacheck.Arbitrary
 import org.scalatest.prop.PropertyChecks
 import org.scalatest.{FunSuite, PropSpec}
 
@@ -10,25 +9,31 @@ object ArbProc {
   import org.scalacheck._
 
   def log[T](it: T): T = {
-    println("@@@@@gen:" + it.toString)
+    // println("@@@@@gen:" + it.toString)
     it
   }
-  def genProc: Gen[Process] = oneOf(genZero, genInput, genLift, genDrop, genPar)
-  val genZero = const(log(Zero))
-  val genName: Gen[Name] = for { p <- genProc } yield log(Quote(p))
-  val genInput = for {
+  def genProc: Gen[Process] = Gen.lzy(Gen.frequency(
+    (16, genZero),
+    (2, genInput),
+    (2, genLift),
+    (4, genDrop),
+    (1, genPar),
+  ))
+  def genZero: Gen[Zero.type] = const(Zero)
+  def genName: Gen[Name] = for { p <- genProc } yield Quote(p)
+  def genInput: Gen[Process] = for {
     subj <- genName
     obj <- genName
     cont <- genProc
   } yield log(Input(Action(subj, obj), cont))
-  val genLift = for {
+  def genLift: Gen[Process] = for {
     obj <- genName
     cont <- genProc
   } yield log(Lift(obj, cont))
-  val genDrop = for { n <- genName } yield log(Drop(n))
-  val genPar = for { ps <- Gen.containerOf[List, Process](genProc) } yield log(Par(ps))
+  def genDrop: Gen[Process] = for {n <- genName } yield log(Drop(n))
+  def genPar: Gen[Par] = for {ps <- Gen.containerOf[List, Process](genProc) } yield log(Par(ps))
 
-  implicit lazy val arbProc: Arbitrary[Process] = Arbitrary(genProc)
+  implicit def arbProc: Arbitrary[Process] = Arbitrary(genProc)
 }
 
 class ProcessTest extends FunSuite with PropertyChecks {
@@ -58,12 +63,18 @@ class ProcessTest extends FunSuite with PropertyChecks {
     assert(normalize(Par(List(p2, p2))) == p2)
   }
 
+  test("normalizing and equivalence: Par(Par(...))") {
+    val pa = Par(List(Zero, Lift(Quote(Zero), Zero)))
+    val pb = Par(List(Par(List(Zero, Lift(Quote(Zero), Zero))), Lift(Quote(Zero), Zero)))
+    assert(normalize(pa) == normalize(pb))
+  }
+
 }
 
 
 class ProcessSpec extends PropSpec with PropertyChecks {
-  import Process._
   import ArbProc.arbProc
+  import Process._
 
   property("normalization is idempotent") {
     forAll ("pnorm") { p: Process =>
@@ -72,7 +83,7 @@ class ProcessSpec extends PropSpec with PropertyChecks {
   }
 
   property("equivalence by normalization") {
-    forAll { (p1: Process, p2: Process) =>
+    forAll ("p1", "p2") { (p1: Process, p2: Process) =>
       equivalent(p1, p2) === (normalize(p1) == normalize(p2))
     }
   }
