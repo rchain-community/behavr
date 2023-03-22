@@ -44,19 +44,20 @@ CopyArray = Vect
 CopyRecord: Nat -> Type -> Type
 CopyRecord n t = Vect n (String, t)
 
+-- TODO: consider using dependent pair
 CopyTagged: Type -> Type
 CopyTagged payload = (String, payload)
 
-data Passable: r -> p -> e -> Type where
-  Atomic: PrimitiveValue -> (Passable r p e)
-  PArray: (n: Nat) -> (CopyArray n (Passable r p e)) -> (Passable r p e)
-  PRecord: (n: Nat) -> (CopyRecord n (Passable r p e)) -> (Passable r p e)
-  PTagged: (CopyTagged (Passable r p e)) -> (Passable r p e)
-  Remotable: r -> (Passable r p e)
-  Promise: p -> (Passable r p e)
-  Error: e -> (Passable r p e)
+data Passable: {r: Type} -> {p: Type} -> {e: Type} -> Type where
+  Atomic: PrimitiveValue -> Passable
+  PArray: (n: Nat) -> (CopyArray n (Passable {r} {p} {e})) -> (Passable {r} {p} {e})
+  PRecord: (n: Nat) -> (CopyRecord n (Passable {r} {p} {e})) -> (Passable {r} {p} {e})
+  PTagged: (CopyTagged (Passable {r} {p} {e})) -> (Passable {r} {p} {e})
+  Remotable: r -> (Passable {r=r})
+  Promise: p -> Passable {p=p}
+  Error: e -> (Passable {e=e})
 
-passStyleOf : (Passable r p e) -> Type
+passStyleOf : Passable -> Type
 passStyleOf (Atomic pv) = passStyleOf' pv
 passStyleOf (PArray n xs) = PassStyle "copyArray"
 passStyleOf (PRecord n xs) = PassStyle "copyRecord"
@@ -65,10 +66,10 @@ passStyleOf (Remotable r) = PassStyle "remotable"
 passStyleOf (Promise p) = PassStyle "promise"
 passStyleOf (Error e) = PassStyle "error"
 
-data PureData: (Passable r p e) -> Type where
+data PureData: Passable -> Type where
  PureAtomic: PureData (Atomic pv)
- PureArray: (a: (CopyArray n (Passable r p e))) -> (Q.All PureData a) -> PureData (PArray n a)
- PureRecord: (entries: (CopyRecord n (Passable r p e)))
+ PureArray: (a: (CopyArray n Passable)) -> (Q.All PureData a) -> PureData (PArray n a)
+ PureRecord: (entries: (CopyRecord n Passable))
     -> (map Prelude.Basics.snd entries) = values -> (Q.All _ values) ->  PureData (PRecord n entries)
  PureTagged: (PureData payload) -> PureData (PTagged (s, payload))
 
@@ -77,7 +78,6 @@ InterfaceSpec = String
 
 data FarRemote methods = Far String methods
 
-getInterfaceOf: (Passable (FarRemote m) p e) -> Maybe InterfaceSpec
+getInterfaceOf: (Passable {r=(FarRemote m)}) -> Maybe InterfaceSpec
 getInterfaceOf (Remotable (Far s _)) = Just s
 getInterfaceOf _ = Nothing
-
