@@ -3,6 +3,14 @@
 
  - [What are the core "data" types? · Issue \#5 · ocapn/ocapn](https://github.com/ocapn/ocapn/issues/5)
 
+## Goals
+
+ - [x] formalize Passable in Idris
+ - [x] " store Key
+ - [x] " Goblins core types
+ - [x] define mapping from Passable to Goblins core types
+ - [ ] define reverse mapping
+ - [ ] prove that the mappings are duals
 
 ## Dev Tools
 
