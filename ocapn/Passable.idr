@@ -38,11 +38,11 @@ passStyleOf' (PV_bigint i) = PassStyle "bigint"
 passStyleOf' (PV_string s) = PassStyle "string"
 passStyleOf' (PV_symbol s) = PassStyle "symbol"
 
-CopyArray: Nat -> Type -> Type
-CopyArray = Vect
+CopyArray: {len: Nat} -> Type -> Type
+CopyArray {len} = Vect len
 
-CopyRecord: Nat -> Type -> Type
-CopyRecord n t = Vect n (String, t)
+CopyRecord: {len: Nat} -> Type -> Type
+CopyRecord {len} t = Vect len (String, t)
 
 -- TODO: consider using dependent pair
 CopyTagged: Type -> Type
@@ -50,8 +50,8 @@ CopyTagged payload = (String, payload)
 
 data Passable: {r: Type} -> {p: Type} -> {e: Type} -> Type where
   Atomic: PrimitiveValue -> Passable
-  PArray: (n: Nat) -> (CopyArray n (Passable {r} {p} {e})) -> (Passable {r} {p} {e})
-  PRecord: (n: Nat) -> (CopyRecord n (Passable {r} {p} {e})) -> (Passable {r} {p} {e})
+  PArray: {len: Nat} -> (CopyArray {len} (Passable {r} {p} {e})) -> (Passable {r} {p} {e})
+  PRecord: {len: Nat} -> (CopyRecord {len} (Passable {r} {p} {e})) -> (Passable {r} {p} {e})
   PTagged: (CopyTagged (Passable {r} {p} {e})) -> (Passable {r} {p} {e})
   Remotable: r -> (Passable {r=r})
   Promise: p -> Passable {p=p}
@@ -59,8 +59,8 @@ data Passable: {r: Type} -> {p: Type} -> {e: Type} -> Type where
 
 passStyleOf : Passable -> Type
 passStyleOf (Atomic pv) = passStyleOf' pv
-passStyleOf (PArray n xs) = PassStyle "copyArray"
-passStyleOf (PRecord n xs) = PassStyle "copyRecord"
+passStyleOf (PArray xs) = PassStyle "copyArray"
+passStyleOf (PRecord xs) = PassStyle "copyRecord"
 passStyleOf (PTagged (tag, payload)) = PassStyle "copyTagged"
 passStyleOf (Remotable r) = PassStyle "remotable"
 passStyleOf (Promise p) = PassStyle "promise"
@@ -68,9 +68,9 @@ passStyleOf (Error e) = PassStyle "error"
 
 data PureData: Passable -> Type where
  PureAtomic: PureData (Atomic pv)
- PureArray: (a: (CopyArray n Passable)) -> (Q.All PureData a) -> PureData (PArray n a)
- PureRecord: (entries: (CopyRecord n Passable))
-    -> (map Prelude.Basics.snd entries) = values -> (Q.All _ values) ->  PureData (PRecord n entries)
+ PureArray: (a: (CopyArray {len} Passable)) -> (Q.All PureData a) -> PureData (PArray {len} a)
+ PureRecord: (entries: (CopyRecord {len} Passable))
+    -> (map Prelude.Basics.snd entries) = values -> (Q.All _ values) ->  PureData (PRecord {len} entries)
  PureTagged: (PureData payload) -> PureData (PTagged (s, payload))
 
 InterfaceSpec: Type
