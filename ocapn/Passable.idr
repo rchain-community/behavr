@@ -1,5 +1,8 @@
 module Passable
 
+import Data.Vect
+import Data.Vect.Quantifiers as Q
+
 %default total
 %access public export
 
@@ -35,21 +38,46 @@ passStyleOf' (PV_bigint i) = PassStyle "bigint"
 passStyleOf' (PV_string s) = PassStyle "string"
 passStyleOf' (PV_symbol s) = PassStyle "symbol"
 
-data Passable r p e =
-  Atomic PrimitiveValue
-  | CopyArray (List (Passable r p e))
-  | CopyRecord (List (String, (Passable r p e))) -- property, value
-  | CopyTagged (String, (Passable r p e)) -- toStringTag, payload
-  | Remotable r
-  | Promise p
-  | Error e
+CopyArray: Nat -> Type -> Type
+CopyArray = Vect
+
+CopyRecord: Nat -> Type -> Type
+CopyRecord n t = Vect n (String, t)
+
+CopyTagged: Type -> Type
+CopyTagged payload = (String, payload)
+
+data Passable: r -> p -> e -> Type where
+  Atomic: PrimitiveValue -> (Passable r p e)
+  PArray: (n: Nat) -> (CopyArray n (Passable r p e)) -> (Passable r p e)
+  PRecord: (n: Nat) -> (CopyRecord n (Passable r p e)) -> (Passable r p e)
+  PTagged: (CopyTagged (Passable r p e)) -> (Passable r p e)
+  Remotable: r -> (Passable r p e)
+  Promise: p -> (Passable r p e)
+  Error: e -> (Passable r p e)
 
 passStyleOf : (Passable r p e) -> Type
 passStyleOf (Atomic pv) = passStyleOf' pv
+passStyleOf (PArray n xs) = PassStyle "copyArray"
+passStyleOf (PRecord n xs) = PassStyle "copyRecord"
+passStyleOf (PTagged (tag, payload)) = PassStyle "copyTagged"
+passStyleOf (Remotable r) = PassStyle "remotable"
+passStyleOf (Promise p) = PassStyle "promise"
 passStyleOf (Error e) = PassStyle "error"
-passStyleOf (CopyArray xs) = PassStyle "copyArray"
-passStyleOf (CopyRecord xs) = PassStyle "copyRecord"
-passStyleOf (CopyTagged x) = PassStyle "copyTagged"
-passStyleOf (Remotable x) = PassStyle "remotable"
-passStyleOf (Promise x) = PassStyle "promise"
+
+data PureData: (Passable r p e) -> Type where
+ PureAtomic: PureData (Atomic pv)
+ PureArray: (a: (CopyArray n (Passable r p e))) -> (Q.All PureData a) -> PureData (PArray n a)
+ PureRecord: (entries: (CopyRecord n (Passable r p e)))
+    -> (map Prelude.Basics.snd entries) = values -> (Q.All _ values) ->  PureData (PRecord n entries)
+ PureTagged: (PureData payload) -> PureData (PTagged (s, payload))
+
+InterfaceSpec: Type
+InterfaceSpec = String
+
+data FarRemote methods = Far String methods
+
+getInterfaceOf: (Passable (FarRemote m) p e) -> Maybe InterfaceSpec
+getInterfaceOf (Remotable (Far s _)) = Just s
+getInterfaceOf _ = Nothing
 
