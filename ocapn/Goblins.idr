@@ -11,7 +11,7 @@ data CapNData: {r: Type} -> {p: Type} -> {e: Type} -> Type where
   CBoolean: Bool -> CapNData
   CFloat: Double -> CapNData
   CInt: Integer -> CapNData
-  CByteString: (Vect n (Fin 0x100)) -> CapNData
+  CByteString: (Vect n Bits8) -> CapNData
   CString: String -> CapNData
   CSymbol: String -> CapNData
   CMap: (Vect len (CapNData {r} {p} {e}, CapNData {r} {p} {e})) -> CapNData {r} {p} {e}
